@@ -8,15 +8,11 @@ interface GetNewsParams {
 }
 
 export const getNews = async (params: GetNewsParams): Promise<PaginatedResponse<NewsItem>> => {
-    const response = await apiInstance.get('/news', { 
+    const response = await apiInstance.get<{ news: NewsItem[]; total: number }>('/news', { 
         params,
-        headers: {
-            'X-Total-Count': '' // Placeholder for Tanstack Query to read from
-        }
     });
-    const total = parseInt(response.headers['x-total-count'] || '0', 10);
     return {
         items: response.data.news,
-        total,
+        total: response.data.total,
     };
 };
