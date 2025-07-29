@@ -5,6 +5,8 @@ import { NewsCard } from '@/entities/News/ui/NewsCard';
 import { Skeleton } from '@/shared/ui/Skeleton';
 import { NewsItem } from '@/shared/types/news';
 import { ViewNews } from '@/features/ViewNews';
+import { useIsAdminMode } from '@/entities/User/model/store';
+import { CreateNews } from '@/features/CreateNews';
 
 const NewsListSkeleton = () => (
     <div className="space-y-4">
@@ -22,6 +24,7 @@ const NewsListSkeleton = () => (
 
 export const NewsList = () => {
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const isAdminMode = useIsAdminMode();
     
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['news', { limit: 20, offset: 0 }],
@@ -56,6 +59,7 @@ export const NewsList = () => {
         isOpen={!!selectedNews}
         onClose={handleCloseSheet}
       />
+      {isAdminMode && <CreateNews />}
     </>
   );
 };

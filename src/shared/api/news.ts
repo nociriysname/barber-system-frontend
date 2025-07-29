@@ -16,3 +16,17 @@ export const getNews = async (params: GetNewsParams): Promise<PaginatedResponse<
         total: response.data.total,
     };
 };
+
+export const createNews = async (data: { title: string; text: string; image_id?: string }): Promise<NewsItem> => {
+    const response = await apiInstance.post('/admin/news/', data);
+    return response.data;
+};
+
+export const updateNews = async (id: number, data: { title?: string; text?: string; image_id?: string }): Promise<NewsItem> => {
+    const response = await apiInstance.patch(`/admin/news/${id}`, data);
+    return response.data;
+};
+
+export const deleteNews = async (id: number): Promise<void> => {
+    await apiInstance.delete(`/admin/news/${id}`);
+};
