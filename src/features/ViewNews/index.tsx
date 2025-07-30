@@ -16,9 +16,9 @@ interface ViewNewsProps {
 
 const AdminActions = ({ newsItem, onClose }: { newsItem: NewsItem, onClose: () => void }) => {
     const queryClient = useQueryClient();
-    const { hapticFeedback } = useTelegram();
+    const { hapticFeedback, showPopup } = useTelegram();
     
-    const deleteMutation = useMutation({
+    const deleteMutation = useMutation<void, Error, number>({
         mutationFn: deleteNews,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['news'] });
@@ -30,14 +30,25 @@ const AdminActions = ({ newsItem, onClose }: { newsItem: NewsItem, onClose: () =
         }
     });
 
-    const handleDelete = () => {
-        // TODO: Add confirmation popup
-        deleteMutation.mutate(newsItem.id);
+    const handleDelete = async () => {
+        hapticFeedback('warning');
+        const buttonId = await showPopup({
+            title: 'Удаление новости',
+            message: 'Вы уверены, что хотите удалить эту новость? Это действие необратимо.',
+            buttons: [
+                { id: 'confirm', type: 'destructive', text: 'Да, удалить' },
+                { type: 'cancel' },
+            ],
+        });
+
+        if (buttonId === 'confirm') {
+            deleteMutation.mutate(newsItem.id);
+        }
     };
 
     return (
         <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-            <Button variant="outline" className="w-full">Изменить фото</Button>
+            <Button variant="outline" className="w-full" disabled>Изменить фото</Button>
             <Button 
                 variant="destructive" 
                 className="w-full"

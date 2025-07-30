@@ -1,6 +1,6 @@
 import { apiInstance } from './base';
 
-interface FileUploadResponse {
+export interface FileUploadResponse {
     file_name: string;
 }
 

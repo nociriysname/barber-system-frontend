@@ -6,8 +6,9 @@ import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Input } from '@/shared/ui/Input';
 import { Textarea } from '@/shared/ui/Textarea';
 import { Button } from '@/shared/ui/Button';
-import { uploadFile } from '@/shared/api/files';
+import { uploadFile, type FileUploadResponse } from '@/shared/api/files';
 import { createNews } from '@/shared/api/news';
+import type { NewsItem } from '@/shared/types/news';
 
 type FormInputs = {
   title: string;
@@ -21,11 +22,11 @@ export const CreateNews = () => {
 
   const { register, handleSubmit, reset } = useForm<FormInputs>();
 
-  const uploadMutation = useMutation({
+  const uploadMutation = useMutation<FileUploadResponse, Error, File>({
     mutationFn: uploadFile,
   });
 
-  const createNewsMutation = useMutation({
+  const createNewsMutation = useMutation<NewsItem, Error, { title: string; text: string; image_id?: string }>({
     mutationFn: createNews,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });

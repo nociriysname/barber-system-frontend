@@ -23,3 +23,13 @@ export const cancelBooking = async (id: number): Promise<Booking> => {
   const response = await apiInstance.patch(`/appointments/${id}/cancel`);
   return response.data;
 };
+
+export const createBooking = async (data: {
+    employee_id: number;
+    service_id: number;
+    appointment_time: string;
+    user_id: number;
+}): Promise<Booking> => {
+    const response = await apiInstance.post('/appointments/', data);
+    return response.data;
+}

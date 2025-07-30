@@ -30,7 +30,6 @@ export const BookingHistory = () => {
             }
         });
 
-        // Sort past bookings to show the most recent first
         pastBookings.sort((a, b) => new Date(b.appointment_time).getTime() - new Date(a.appointment_time).getTime());
 
         return { upcoming: upcomingBookings, past: pastBookings };
@@ -45,7 +44,12 @@ export const BookingHistory = () => {
     }
 
     if (!data || data.items.length === 0) {
-        return <div className="text-hint text-center p-4">У вас пока нет записей.</div>
+        return (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+                <span className="text-6xl mb-4">🐧</span>
+                <p className="text-hint">У вас пока нет записей.</p>
+            </div>
+        )
     }
 
     return (

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button';
 import { useTelegram } from '@/shared/lib/hooks/useTelegram';
 import { cancelBooking } from '@/shared/api/booking';
+import type { Booking } from '@/shared/types/booking';
 
 interface CancelBookingProps {
     bookingId: number;
@@ -12,7 +13,7 @@ export const CancelBooking = ({ bookingId }: CancelBookingProps) => {
     const { showPopup, hapticFeedback } = useTelegram();
     const queryClient = useQueryClient();
 
-    const mutation = useMutation({
+    const mutation = useMutation<Booking, Error, number>({
         mutationFn: cancelBooking,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bookings'] });

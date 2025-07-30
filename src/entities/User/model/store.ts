@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/shared/types/user';
+import { getMe } from '@/shared/api/user';
 
 interface UserState {
   user: User | null;
@@ -17,6 +18,7 @@ interface UserActions {
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
     logout: () => void;
+    refetchUser: () => Promise<void>;
   };
 }
 
@@ -41,6 +43,14 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
     setLoading: (loading) => set({ isLoading: loading }),
     setError: (error) => set({ error }),
     logout: () => set({ ...initialState, isLoading: false }),
+    refetchUser: async () => {
+        try {
+            const userData = await getMe();
+            set({ user: userData });
+        } catch (error) {
+            console.error("Failed to refetch user:", error);
+        }
+    }
   },
 }));
 
