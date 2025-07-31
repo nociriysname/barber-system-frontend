@@ -43,13 +43,29 @@ export const BookingHistory = () => {
         return <div className="text-red-500 text-center p-4">Ошибка при загрузке записей: {error.message}</div>;
     }
 
+
+    const navigate = useNavigate();
+    const isAdminMode = useIsAdminMode();
+
     if (!data || data.items.length === 0) {
+        if (isAdminMode) {
+            return <div className="text-hint text-center p-4">Записей не найдено.</div>;
+        }
+
         return (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-                <span className="text-6xl mb-4">🐧</span>
-                <p className="text-hint">У вас пока нет записей.</p>
+                {/* SVG-код пингвина с анимацией */}
+                <span className="text-6xl mb-4 animate-penguin-sway">🐧</span> 
+                <h3 className="text-xl font-bold text-white">Здесь пока пусто</h3>
+                <p className="text-hint mt-1">У вас еще нет ни одной записи.</p>
+                <Button 
+                    onClick={() => navigate(ROUTES.BOOK)} 
+                    className="mt-6"
+                >
+                    Создать первую запись
+                </Button>
             </div>
-        )
+        );
     }
 
     return (
