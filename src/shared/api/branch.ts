@@ -9,3 +9,8 @@ export const getAllBranches = async (params: { limit: number; offset: number }):
     total: response.data.total,
   };
 };
+
+export const createBranch = async (data: Omit<Branch, 'id'|'created_at'|'updated_at'|'image_id'|'image_url'>): Promise<Branch> => {
+  const response = await apiInstance.post('/admin/barbershops/', data);
+  return response.data;
+};

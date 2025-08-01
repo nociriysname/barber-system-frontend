@@ -8,4 +8,8 @@ export interface Employee {
   phone_number: string | null;
   created_at: string;
   updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+  }
 }

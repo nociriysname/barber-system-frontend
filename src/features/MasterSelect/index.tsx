@@ -12,17 +12,22 @@ interface MasterSelectProps {
   onBack: () => void;
 }
 
-const MasterCard = ({ master, onSelect }: { master: Employee, onSelect: (id: number) => void }) => (
-    <div
-        onClick={() => onSelect(master.id)}
-        className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-secondary-bg flex-shrink-0 w-28 h-28 cursor-pointer"
-    >
-        <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center mb-2">
-            <User className="w-8 h-8 text-hint" />
+const MasterCard = ({ master, onSelect }: { master: Employee, onSelect: (id: number) => void }) => {
+    const masterName = master.user?.name ?? `Мастер #${master.id}`;
+
+    return (
+        <div
+            onClick={() => onSelect(master.id)}
+            className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-secondary-bg flex-shrink-0 w-28 h-28 cursor-pointer"
+        >
+            <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center mb-2">
+                <User className="w-8 h-8 text-hint" />
+            </div>
+            {/* --- ЗАМЕНИ ЭТУ СТРОКУ --- */}
+            <p className="text-sm font-medium text-white/80 leading-tight">{masterName}</p>
         </div>
-        <p className="text-sm font-medium text-white/80 leading-tight">Мастер #{master.id}</p>
-    </div>
-);
+    );
+};
 
 
 export const MasterSelect = ({ branchId, onMasterSelect, onBack }: MasterSelectProps) => {
