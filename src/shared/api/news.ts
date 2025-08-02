@@ -8,7 +8,7 @@ interface GetNewsParams {
 }
 
 export const getNews = async (params: GetNewsParams): Promise<PaginatedResponse<NewsItem>> => {
-    const response = await apiInstance.get<{ news: NewsItem[]; total: number }>('/news', { 
+    const response = await apiInstance.get('/news/', {
         params,
     });
     return {

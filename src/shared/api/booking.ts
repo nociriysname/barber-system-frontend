@@ -11,11 +11,10 @@ export const getMyBookings = async (params: { limit: number; offset: number }): 
 };
 
 export const getAllAppointments = async (params: { limit: number; offset: number }): Promise<PaginatedResponse<Booking>> => {
-  const response = await apiInstance.get('/admin/appointments', { params });
-   const total = parseInt(response.headers['x-total-count'] || '0', 10);
+  const response = await apiInstance.get('/admin/appointments/', { params });
   return {
     items: response.data.appointments,
-    total: total,
+    total: response.data.total,
   };
 };
 
