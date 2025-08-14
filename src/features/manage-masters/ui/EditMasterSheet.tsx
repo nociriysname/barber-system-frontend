@@ -1,20 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomSheet from '../../../shared/ui/BottomSheet';
-import { MasterStatus } from '../../../shared/api/types';
+import { Master, MasterStatus } from '../../../shared/api/types';
 import { useApi } from '../../../shared/api';
 import { useImageUpload } from '../../../shared/lib/hooks';
 import { MasterAvatar } from '../../../entities/master';
 import { LoaderIcon } from '../../../shared/ui/icons';
 
-interface CreateMasterSheetProps {
+interface EditMasterSheetProps {
     isOpen: boolean;
     onClose: () => void;
-    branchId: number;
+    master: Master | null;
     api: ReturnType<typeof useApi>;
 }
 
-export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMasterSheetProps) => {
+export const EditMasterSheet = ({ isOpen, onClose, master, api }: EditMasterSheetProps) => {
     const [name, setName] = useState('');
     const [position, setPosition] = useState<MasterStatus>(MasterStatus.BARBER);
     const [username, setUsername] = useState('');
@@ -22,30 +22,49 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
     const [endTime, setEndTime] = useState('18:00');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { previewUrl, isUploading, inputRef, handleFileSelect, triggerFileInput, removeImage } = useImageUpload({});
+    const { previewUrl, isUploading, inputRef, handleFileSelect, triggerFileInput, removeImage, setPreviewUrl } = useImageUpload({
+        initialImageUrl: master?.avatarUrl,
+    });
+    
     const allTimeSlots = api.getTimeSlots();
+
+    useEffect(() => {
+        if (master && setPreviewUrl) {
+            setName(master.name);
+            setPosition(master.position);
+            setUsername(master.username || '');
+            setPreviewUrl(master.avatarUrl);
+            setStartTime(master.working_hours_start || '10:00');
+            setEndTime(master.working_hours_end || '18:00');
+        }
+    }, [master, isOpen, setPreviewUrl]);
+    
+    if (!master) return null;
 
     const handleSubmit = async () => {
         if (!name.trim()) return;
-        setIsSubmitting(true);
-        await api.addMaster({
+
+        const dataToUpdate: Partial<Parameters<typeof api.updateMaster>[1]> = {
             name: name.trim(),
-            branchId,
             position,
             username: username.trim() || undefined,
-            avatarFile: handleFileSelect.file,
             working_hours_start: startTime,
-            working_hours_end: endTime
-        });
+            working_hours_end: endTime,
+        };
+    
+        if (handleFileSelect.file) {
+            // New file was selected
+            dataToUpdate.avatarFile = handleFileSelect.file;
+        } else if (!previewUrl && master.avatarUrl) {
+            // Image was present and is now removed
+            dataToUpdate.avatarFile = null;
+        } 
+        // Otherwise, avatarFile remains undefined, so API won't touch it.
+
+        setIsSubmitting(true);
+        await api.updateMaster(master.id, dataToUpdate);
         setIsSubmitting(false);
         onClose();
-        // Reset state for next time
-        setName('');
-        setPosition(MasterStatus.BARBER);
-        setUsername('');
-        setStartTime('10:00');
-        setEndTime('18:00');
-        removeImage();
     };
     
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,10 +75,14 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
         setUsername(value.replace(/[^a-zA-Z0-9_@]/g, ''));
     };
 
+    const handleRemoveImage = () => {
+        removeImage();
+    }
+
     return (
         <BottomSheet isOpen={isOpen} onClose={onClose}>
             <div className="text-white">
-                <h2 className="text-2xl font-bold mb-4">Новый мастер</h2>
+                <h2 className="text-2xl font-bold mb-4">Редактировать мастера</h2>
                 <div className="space-y-4">
                     <div className="flex items-center space-x-4">
                         <button onClick={triggerFileInput} className="relative flex-shrink-0">
@@ -72,6 +95,11 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
                            <input type="text" placeholder="Telegram, например @username" value={username} onChange={handleUsernameChange} className="w-full p-3 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none" />
                         </div>
                     </div>
+                     {previewUrl && (
+                        <button onClick={handleRemoveImage} className="w-full text-center py-2 bg-[#FF3B30]/20 text-[#FF3B30] rounded-lg cursor-pointer font-semibold hover:bg-[#FF3B30]/30 transition-colors">
+                            Удалить фото
+                        </button>
+                    )}
                      <div>
                         <label className="text-sm text-gray-400">Должность</label>
                         <select value={position} onChange={e => setPosition(e.target.value as MasterStatus)} className="w-full p-3 mt-1 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none">
@@ -80,7 +108,7 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
                         </select>
                     </div>
 
-                    <div>
+                     <div>
                         <label className="text-sm text-gray-400">Часы работы</label>
                         <div className="flex space-x-2 mt-1">
                             <select value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full p-3 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none appearance-none text-center">
@@ -93,13 +121,12 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
                         </div>
                     </div>
 
-
                     <button 
                         onClick={handleSubmit} 
                         disabled={!name.trim() || isSubmitting || isUploading}
                         className="w-full bg-[#007BFF] text-white font-bold py-3 rounded-xl active:scale-95 transition-transform flex items-center justify-center disabled:bg-gray-500 disabled:opacity-50"
                     >
-                        {isSubmitting ? <LoaderIcon className="w-6 h-6 animate-spin" /> : 'Создать мастера'}
+                        {isSubmitting ? <LoaderIcon className="w-6 h-6 animate-spin" /> : 'Сохранить'}
                     </button>
                 </div>
             </div>

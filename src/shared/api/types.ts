@@ -15,6 +15,7 @@ export enum VerificationStatus {
 
 // Renamed on frontend for consistency with old code
 export enum BookingStatus {
+    PENDING = "Ожидает",
     CONFIRMED = "Предстоит", // Was 'CONFIRMED'
     COMPLETED = "Завершена", // Was 'COMPLETED'
     CANCELED = "Отменена",  // Was 'CANCELED'
@@ -83,6 +84,8 @@ export interface Master { // Was Employee
     name: string;
     username?: string;
     avatarUrl: string | null;
+    working_hours_start?: string;
+    working_hours_end?: string;
 }
 
 export interface Booking { // Was Appointment

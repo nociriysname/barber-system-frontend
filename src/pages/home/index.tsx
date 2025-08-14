@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApi } from '../../shared/api';
 import BottomSheet from '../../shared/ui/BottomSheet';
@@ -12,7 +13,7 @@ interface HomePageProps {
 
 export const HomePage = ({ api, isAdmin }: HomePageProps) => {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-  const { news, addNewsItem, deleteNewsItem, updateNewsItemImage } = api;
+  const { news, addNewsItem, deleteNewsItem, updateNewsItem } = api;
 
   const handleCloseCreateSheet = () => {
     setIsCreateSheetOpen(false);
@@ -26,7 +27,7 @@ export const HomePage = ({ api, isAdmin }: HomePageProps) => {
             newsItems={news} 
             isAdmin={isAdmin}
             deleteNewsItem={deleteNewsItem}
-            updateNewsItemImage={updateNewsItemImage}
+            updateNewsItem={updateNewsItem}
         />
 
         {isAdmin && (

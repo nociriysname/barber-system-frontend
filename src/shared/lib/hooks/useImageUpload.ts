@@ -82,5 +82,6 @@ export const useImageUpload = ({ initialImageUrl = null, onFileSelect }: UseImag
         handleFileSelect: { file, handleFileSelect },
         triggerFileInput,
         removeImage,
+        setPreviewUrl,
     };
 };

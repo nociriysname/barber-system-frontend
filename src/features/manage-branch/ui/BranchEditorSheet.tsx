@@ -1,14 +1,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import BottomSheet from '../../../shared/ui/BottomSheet';
-import { Branch } from '../../../shared/api/types';
+import { Branch, Master } from '../../../shared/api/types';
 import { useApi } from '../../../shared/api';
-import { PlusIcon, LoaderIcon } from '../../../shared/ui/icons';
+import { PlusIcon, PencilIcon } from '../../../shared/ui/icons';
 import { RenameBranchSheet } from '../../rename-branch/ui/RenameBranchSheet';
 import { CreateMasterSheet } from '../../manage-masters/ui/CreateMasterSheet';
 import { MasterAvatar } from '../../../entities/master';
 import { usePopup } from '../../../shared/lib/hooks';
 import { BookingList } from '../../../widgets/booking-list';
+import { EditMasterSheet } from '../../manage-masters/ui/EditMasterSheet';
 
 interface BranchEditorSheetProps {
     isOpen: boolean;
@@ -18,30 +19,60 @@ interface BranchEditorSheetProps {
 }
 
 export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditorSheetProps) => {
-    const { masters, updateBranch, deleteMaster, bookings, currentUser, cancelBooking, deleteBooking } = api;
+    const { masters, updateBranch, deleteMaster, bookings, currentUser, cancelBooking, deleteBooking, confirmBooking } = api;
     const { showPopup } = usePopup();
 
     const [activeTab, setActiveTab] = useState<'settings' | 'bookings'>('settings');
     const [isUpdatingPublic, setIsUpdatingPublic] = useState(false);
     const [isRenameSheetOpen, setIsRenameSheetOpen] = useState(false);
     const [isCreateMasterSheetOpen, setIsCreateMasterSheetOpen] = useState(false);
+    const [editingMaster, setEditingMaster] = useState<Master | null>(null);
 
-    // Reset tab to settings when a new branch is opened
+    // Локальное состояние для визуального состояния переключателя, чтобы обеспечить оптимистичное обновление UI.
+    const [isPublic, setIsPublic] = useState(branch?.is_public || false);
+
     useEffect(() => {
-        if (isOpen) {
-            setActiveTab('settings');
+        // Когда открывается панель или меняются данные о филиале, синхронизируем локальное состояние.
+        if (isOpen && branch) {
+            setIsPublic(branch.is_public);
+            setActiveTab('settings'); // Сбрасываем на вкладку настроек при открытии
         }
-    }, [isOpen]);
+    }, [isOpen, branch]);
+
+    const branchBookings = useMemo(() => {
+        if (!branch) return [];
+        return bookings.filter(b => b.branchAddress === branch.address);
+    }, [bookings, branch]);
 
     if (!branch) return null;
 
     const branchMasters = masters.filter(m => m.barbershop_id === branch.id);
-    const branchBookings = useMemo(() => bookings.filter(b => b.branchAddress === branch.address), [bookings, branch]);
 
     const handleTogglePublic = async () => {
+        if (isUpdatingPublic || !branch) return;
+
+        const newIsPublicState = !isPublic;
+
+        // 1. Оптимистично обновляем локальное состояние для мгновенной анимации UI.
+        setIsPublic(newIsPublicState);
         setIsUpdatingPublic(true);
-        await updateBranch(branch.id, { is_public: !branch.is_public });
-        setIsUpdatingPublic(false);
+
+        try {
+            // 2. Вызываем API для сохранения изменения.
+            await updateBranch(branch.id, { is_public: newIsPublicState });
+        } catch (error) {
+            console.error("Failed to update branch status:", error);
+            // 3. Если вызов API не удался, возвращаем переключатель в исходное состояние.
+            setIsPublic(!newIsPublicState);
+            showPopup({
+                title: 'Ошибка',
+                message: 'Не удалось изменить статус филиала. Попробуйте снова.',
+                buttons: [{ id: 'ok', text: 'OK' }]
+            });
+        } finally {
+            // 4. Снова включаем кнопку.
+            setIsUpdatingPublic(false);
+        }
     };
     
     const handleDeleteMaster = (masterId: number, masterName: string) => {
@@ -61,16 +92,12 @@ export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditor
             <div className="bg-[#1E1E1E] p-4 rounded-2xl">
                 <div className="flex justify-between items-center">
                     <p className="font-bold text-lg">Публичный доступ</p>
-                    <button onClick={handleTogglePublic} disabled={isUpdatingPublic} className="relative inline-flex items-center h-8 rounded-full w-14 transition-colors duration-300 focus:outline-none disabled:opacity-50">
-                        <div className={`absolute inset-0 rounded-full transition-colors ${branch.is_public ? 'bg-[#007BFF]' : 'bg-gray-600'}`}></div>
-                        {isUpdatingPublic ? (
-                            <LoaderIcon className={`inline-block w-6 h-6 text-white transform transition-transform duration-300 ${branch.is_public ? 'translate-x-7' : 'translate-x-1'} animate-spin`} />
-                        ) : (
-                            <span className={`inline-block w-6 h-6 transform bg-white rounded-full transition-transform duration-300 ${branch.is_public ? 'translate-x-7' : 'translate-x-1'}`} />
-                        )}
+                    <button onClick={handleTogglePublic} disabled={isUpdatingPublic} className="relative inline-flex items-center h-8 rounded-full w-14 transition-colors duration-300 focus:outline-none">
+                        <div className={`absolute inset-0 rounded-full transition-colors duration-300 ${isPublic ? 'bg-[#007BFF]' : 'bg-gray-600'}`}></div>
+                        <span className={`inline-block w-6 h-6 transform bg-white rounded-full transition-transform duration-300 ease-in-out ${isPublic ? 'translate-x-7' : 'translate-x-1'}`} />
                     </button>
                 </div>
-                <p className="text-sm text-gray-400 mt-2">{branch.is_public ? 'Филиал виден всем пользователям' : 'Филиал виден только администраторам'}</p>
+                <p className="text-sm text-gray-400 mt-2">{isPublic ? 'Филиал виден всем пользователям' : 'Филиал виден только администраторам'}</p>
             </div>
 
             <button onClick={() => setIsRenameSheetOpen(true)} className="w-full text-center py-3 bg-[#2c2c2e] rounded-lg font-semibold hover:bg-[#3a3a3c] transition-colors">Переименовать филиал</button>
@@ -93,7 +120,10 @@ export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditor
                                     {master.username && <p className="text-xs text-gray-400">{master.username}</p>}
                                 </div>
                             </div>
-                            <button onClick={() => handleDeleteMaster(master.id, master.name)} className="font-semibold text-red-500 px-2">Удалить</button>
+                            <div className="flex items-center">
+                                <button onClick={() => setEditingMaster(master)} className="font-semibold text-blue-500 px-3 py-1">Править</button>
+                                <button onClick={() => handleDeleteMaster(master.id, master.name)} className="font-semibold text-red-500 px-3 py-1">Удалить</button>
+                            </div>
                         </div>
                     ))}
                     {branchMasters.length === 0 && <p className="text-gray-400 text-sm text-center py-4">В этом филиале пока нет мастеров.</p>}
@@ -133,6 +163,7 @@ export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditor
                                 isAdmin={true}
                                 onCancel={cancelBooking}
                                 onDelete={deleteBooking}
+                                onConfirm={confirmBooking}
                             />
                         )
                     )}
@@ -150,6 +181,13 @@ export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditor
                 isOpen={isCreateMasterSheetOpen}
                 onClose={() => setIsCreateMasterSheetOpen(false)}
                 branchId={branch.id}
+                api={api}
+            />
+
+            <EditMasterSheet
+                isOpen={!!editingMaster}
+                onClose={() => setEditingMaster(null)}
+                master={editingMaster}
                 api={api}
             />
         </>

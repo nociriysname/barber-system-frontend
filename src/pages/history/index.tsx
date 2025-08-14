@@ -10,7 +10,7 @@ interface HistoryPageProps {
 }
 
 export const HistoryPage = ({ api, setActiveView, isAdmin }: HistoryPageProps) => {
-    const { currentUser, bookings, cancelBooking, deleteBooking } = api;
+    const { currentUser, bookings, cancelBooking, deleteBooking, confirmBooking } = api;
     const title = isAdmin ? "Все записи" : "Мои записи";
 
     return (
@@ -23,6 +23,7 @@ export const HistoryPage = ({ api, setActiveView, isAdmin }: HistoryPageProps) =
                 isAdmin={isAdmin}
                 onCancel={cancelBooking}
                 onDelete={deleteBooking}
+                onConfirm={confirmBooking}
                 onCreateBooking={() => setActiveView('book')}
               />
             )}

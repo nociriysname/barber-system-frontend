@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useImageUpload } from '../../../shared/lib/hooks/useImageUpload';
 import { LoaderIcon } from '../../../shared/ui/icons';
@@ -47,7 +48,7 @@ export const CreateNews = ({ onAddNews, onClose }: CreateNewsProps) => {
           className="w-full p-3 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none"
         />
         <div>
-          <input id="image-upload" type="file" accept="image/*" ref={inputRef} className="hidden" />
+          <input id="image-upload" type="file" accept="image/*" ref={inputRef} onChange={handleFileSelect.handleFileSelect} className="hidden" />
           {!previewUrl ? (
             <button onClick={triggerFileInput} className="w-full text-center p-4 bg-[#2c2c2e] rounded-lg block cursor-pointer font-semibold hover:bg-[#3a3a3c] transition-colors">
               Прикрепить фото

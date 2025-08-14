@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Branch, Service, Master, View } from '../../shared/api/types';
 import { ChevronLeftIcon, PlusIcon, LocationMarkerIcon, PencilIcon } from '../../shared/ui/icons';
 import BottomSheet from '../../shared/ui/BottomSheet';
@@ -187,6 +188,7 @@ const SelectDateTimeStep = ({ master, totalDuration, selectedDate, setSelectedDa
                         return (<button key={time} onClick={() => handleTimeSlotClick(time)} className={buttonClass} disabled={isDisabled}>{time}</button>);
                     })}
                 </div>
+                 {timeSlots.length === 0 && <p className="text-gray-400 text-center py-4">Мастер не работает в этот день или нет доступных слотов.</p>}
             </div>
             {selectedTime && (
                 <div className="fixed bottom-20 left-0 right-0 p-4 bg-[#121212]/80 backdrop-blur-lg border-t border-white/10">
@@ -218,7 +220,7 @@ export const BookPage = ({ api, isAdmin, setActiveView }: BookPageProps) => {
     const mapRef = useRef<any>(null);
     const mapInstanceRef = useRef<any>(null);
 
-    const timeSlots = useMemo(() => getTimeSlots(), [getTimeSlots]);
+    const timeSlotsForMaster = useMemo(() => getTimeSlots(selectedMaster), [getTimeSlots, selectedMaster]);
     
     const visibleBranches = useMemo(() => {
         if (isAdmin) return branches;
@@ -240,7 +242,7 @@ export const BookPage = ({ api, isAdmin, setActiveView }: BookPageProps) => {
     
     useImagePreloader(avatarUrlsToPreload);
 
-    const handleBranchSelect = (branch: Branch) => {
+    const handleBranchSelect = useCallback((branch: Branch) => {
         if (isCreateSheetOpen || isPickingLocation || editingBranch) return;
         
         if (isAdmin) {
@@ -250,7 +252,7 @@ export const BookPage = ({ api, isAdmin, setActiveView }: BookPageProps) => {
             setStep(2);
             telegramService.hapticImpact('light');
         }
-    };
+    }, [isAdmin, isCreateSheetOpen, isPickingLocation, editingBranch, setEditingBranch, setSelectedBranch, setStep]);
     
     const handleServiceToggle = (service: Service) => {
         setSelectedServices(prev =>
@@ -325,28 +327,39 @@ export const BookPage = ({ api, isAdmin, setActiveView }: BookPageProps) => {
     useEffect(() => {
         if (!mapReady || !mapInstanceRef.current || !ymaps || !visibleBranches) return;
 
-        const map = mapInstanceRef.current;
-        map.geoObjects.removeAll();
+        // Defer heavy map operations to prevent UI freezing during state updates.
+        const updateMapPlacemarks = () => {
+            const map = mapInstanceRef.current;
+            if (!map) return;
+            
+            map.geoObjects.removeAll();
 
-        visibleBranches.forEach(branch => {
-            const preset = isAdmin && !branch.is_public
-                ? 'islands#grayCircleDotIconWithCaption'
-                : 'islands#blueCircleDotIconWithCaption';
+            visibleBranches.forEach(branch => {
+                const preset = isAdmin && !branch.is_public
+                    ? 'islands#grayCircleDotIconWithCaption'
+                    : 'islands#blueCircleDotIconWithCaption';
 
-            const placemarkData = {
-                hintContent: branch.name,
-                // Set balloonContent to null for admins to prevent the info window from opening
-                balloonContent: isAdmin ? null : `<strong>${branch.name}</strong><br/>${branch.address}`
-            };
-                
-            const placemark = new ymaps.Placemark(branch.coords, placemarkData, {
-                preset,
-                iconCaption: branch.name + (isAdmin && !branch.is_public ? ' (Приватный)' : '')
+                const placemarkData = {
+                    hintContent: branch.name,
+                    // Set balloonContent to null for admins to prevent the info window from opening
+                    balloonContent: isAdmin ? null : `<strong>${branch.name}</strong><br/>${branch.address}`
+                };
+                    
+                const placemark = new ymaps.Placemark(branch.coords, placemarkData, {
+                    preset,
+                    iconCaption: branch.name + (isAdmin && !branch.is_public ? ' (Приватный)' : '')
+                });
+                placemark.events.add('click', () => handleBranchSelect(branch));
+                map.geoObjects.add(placemark);
             });
-            placemark.events.add('click', () => handleBranchSelect(branch));
-            map.geoObjects.add(placemark);
-        });
-    }, [visibleBranches, mapReady, isAdmin]);
+        };
+
+        const timeoutId = setTimeout(updateMapPlacemarks, 0);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [visibleBranches, mapReady, isAdmin, handleBranchSelect]);
 
     
     const handleConfirmLocation = () => {
@@ -400,7 +413,7 @@ export const BookPage = ({ api, isAdmin, setActiveView }: BookPageProps) => {
                         totalDuration={totalDuration}
                         selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
-                        timeSlots={timeSlots}
+                        timeSlots={timeSlotsForMaster}
                         occupiedSlots={occupiedSlots}
                         onConfirmBooking={handleConfirmBooking}
                         totalPrice={totalPrice}

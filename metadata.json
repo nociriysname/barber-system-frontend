@@ -1,6 +1,6 @@
 {
-  "name": "BarberSystem",
-  "description": "A modern, high-quality SPA for BarberSystem, built with React and Clean Architecture.",
+  "name": "Premium Booking App v2",
+  "description": "A modern and premium Telegram Web App for booking services, designed with a minimalist aesthetic and a focus on user experience.",
   "requestFramePermissions": [],
   "prompt": ""
 }

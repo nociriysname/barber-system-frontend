@@ -2,49 +2,61 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>BarberSystem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Premium Booking</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://api-maps.yandex.ru/v3/?apikey=1bb648d8-ca5e-4b8b-97da-129e3177223d&lang=ru_RU"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=1bb648d8-ca5e-4b8b-97da-129e3177223d&lang=ru_RU" type="text/javascript"></script>
     <style>
-      :root {
-        --bg-color: #121212;
-        --text-color: #ffffff;
-        --hint-color: #8E8E93;
-        --link-color: #007BFF;
-        --button-color: #007BFF;
-        --button-text-color: #ffffff;
-        --secondary-bg-color: #1E1E1E;
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        20%, 80% { transform: translate3d(2px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+        40%, 60% { transform: translate3d(4px, 0, 0); }
+      }
+      .animate-shake {
+        animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+      }
+      @keyframes flash-red {
+        50% { 
+            background-color: #FF3B30; 
+            color: white; 
+            border-color: transparent; 
+        }
+      }
+      .animate-flash-red {
+        animation: flash-red 0.5s ease-out;
+      }
+      @keyframes penguin-sway {
+        0%, 100% { transform: rotate(-2.5deg); }
+        50% { transform: rotate(2.5deg); }
+      }
+      .animate-penguin-sway {
+        animation: penguin-sway 3s ease-in-out infinite;
+        transform-origin: bottom center;
       }
     </style>
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.23.1",
-    "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.40.1",
-    "zustand": "https://esm.sh/zustand@4.5.2",
-    "zustand/middleware": "https://esm.sh/zustand@4.5.2/middleware",
-    "axios": "https://esm.sh/axios@1.7.2",
-    "react-hook-form": "https://esm.sh/react-hook-form@7.51.5",
-    "@pbe/react-yandex-maps": "https://esm.sh/@pbe/react-yandex-maps@1.2.2",
-    "framer-motion": "https://esm.sh/framer-motion@11.2.10",
-    "clsx": "https://esm.sh/clsx@2.1.1",
-    "tailwind-merge": "https://esm.sh/tailwind-merge@2.3.0",
-    "lucide-react": "https://esm.sh/lucide-react@0.390.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "react/": "https://esm.sh/react@^19.1.1/"
+    "react/": "https://esm.sh/react@^18.3.1/",
+    "react": "https://esm.sh/react@^18.3.1",
+    "react-dom/": "https://esm.sh/react-dom@^18.3.1/",
+    "react-dom/client": "https://esm.sh/react-dom@^18.3.1/client"
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <script type="module" src="/src/app/index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

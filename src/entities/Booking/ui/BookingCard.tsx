@@ -5,6 +5,7 @@ import { usePopup } from '../../../shared/lib/hooks';
 
 const getStatusClasses = (status: BookingStatus) => {
     switch (status) {
+        case BookingStatus.PENDING: return 'bg-yellow-500/20 text-yellow-400';
         case BookingStatus.CONFIRMED: return 'bg-blue-500/20 text-blue-400';
         case BookingStatus.COMPLETED: return 'bg-green-500/20 text-green-400';
         case BookingStatus.CANCELED: return 'bg-gray-500/20 text-gray-400';
@@ -16,10 +17,11 @@ interface BookingCardProps {
     booking: Booking;
     onCancel: (id: number) => void;
     onDelete: (id: number) => void;
+    onConfirm: (id: number) => void;
     isAdmin: boolean;
 }
 
-export const BookingCard = ({ booking, onCancel, onDelete, isAdmin }: BookingCardProps) => {
+export const BookingCard = ({ booking, onCancel, onDelete, onConfirm, isAdmin }: BookingCardProps) => {
     const { showPopup } = usePopup();
 
     const handleDeleteClick = () => {
@@ -58,6 +60,22 @@ export const BookingCard = ({ booking, onCancel, onDelete, isAdmin }: BookingCar
                     <p><span className="text-gray-400">Мастер:</span> {booking.masterName}</p>
                     <p><span className="text-gray-400">Филиал:</span> {booking.branchAddress}</p>
                 </div>
+                 {booking.status === BookingStatus.PENDING && (
+                    <div className="mt-3 pt-3 border-t border-white/10 flex space-x-2">
+                        <button
+                            className="w-full text-center text-green-400 font-semibold py-1.5 rounded-lg border-2 border-green-400/50 hover:bg-green-400/10 transition active:scale-95 text-sm"
+                            onClick={() => onConfirm(booking.id)}
+                        >
+                            Подтвердить
+                        </button>
+                        <button
+                            className="w-full text-center text-[#FF3B30] font-semibold py-1.5 rounded-lg border-2 border-[#FF3B30]/50 hover:bg-[#FF3B30]/10 transition active:scale-95 text-sm"
+                            onClick={handleDeleteClick}
+                        >
+                            Удалить
+                        </button>
+                    </div>
+                 )}
                  {booking.status === BookingStatus.CONFIRMED && (
                     <div className="mt-3 pt-3 border-t border-white/10 flex space-x-2">
                         <CancelBookingButton booking={booking} onCancel={onCancel} isCompact={true} />
