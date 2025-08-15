@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import BottomSheet from '../../../shared/ui/BottomSheet';
 import { MasterStatus } from '../../../shared/api/types';
 import { useApi } from '../../../shared/api';
@@ -25,6 +25,38 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
     const { previewUrl, isUploading, inputRef, handleFileSelect, triggerFileInput, removeImage } = useImageUpload({});
     const allTimeSlots = api.getTimeSlots();
 
+    useEffect(() => {
+        if (isOpen) {
+            // Reset form state when sheet opens
+            setName('');
+            setPosition(MasterStatus.BARBER);
+            setUsername('');
+            setStartTime('10:00');
+            setEndTime('18:00');
+            removeImage();
+            setIsSubmitting(false);
+        }
+    }, [isOpen]);
+    
+    const availableStartTimes = useMemo(() => {
+        // Start time can be any slot except the last one
+        return allTimeSlots.slice(0, -1);
+    }, [allTimeSlots]);
+
+    const availableEndTimes = useMemo(() => {
+        const startIndex = allTimeSlots.indexOf(startTime);
+        if (startIndex === -1) return [];
+        // End time must be at least one slot after start time
+        return allTimeSlots.slice(startIndex + 1);
+    }, [startTime, allTimeSlots]);
+
+    // Effect to auto-adjust end time if start time makes it invalid
+    useEffect(() => {
+        if (!availableEndTimes.includes(endTime)) {
+            setEndTime(availableEndTimes[0] || '');
+        }
+    }, [startTime, endTime, availableEndTimes]);
+
     const handleSubmit = async () => {
         if (!name.trim()) return;
         setIsSubmitting(true);
@@ -39,13 +71,6 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
         });
         setIsSubmitting(false);
         onClose();
-        // Reset state for next time
-        setName('');
-        setPosition(MasterStatus.BARBER);
-        setUsername('');
-        setStartTime('10:00');
-        setEndTime('18:00');
-        removeImage();
     };
     
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,11 +109,11 @@ export const CreateMasterSheet = ({ isOpen, onClose, branchId, api }: CreateMast
                         <label className="text-sm text-gray-400">Часы работы</label>
                         <div className="flex space-x-2 mt-1">
                             <select value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full p-3 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none appearance-none text-center">
-                                {allTimeSlots.map(slot => <option key={`start-${slot}`} value={slot}>{slot}</option>)}
+                                {availableStartTimes.map(slot => <option key={`start-${slot}`} value={slot}>{slot}</option>)}
                             </select>
                             <span className="p-3">-</span>
                              <select value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full p-3 bg-[#2c2c2e] rounded-lg border-2 border-transparent focus:border-[#007BFF] outline-none appearance-none text-center">
-                                {allTimeSlots.map(slot => <option key={`end-${slot}`} value={slot}>{slot}</option>)}
+                                {availableEndTimes.map(slot => <option key={`end-${slot}`} value={slot}>{slot}</option>)}
                             </select>
                         </div>
                     </div>

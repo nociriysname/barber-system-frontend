@@ -44,16 +44,16 @@ export const Calendar = ({ selectedDate, setSelectedDate }: CalendarProps) => {
             </div>
             <div className="grid grid-cols-7 gap-y-2 mt-2">
                 {days.map((day, index) => {
-                    const isPast = day < today;
+                    const isUnavailable = day <= today;
                     return (
                         <button
                             key={index}
-                            onClick={() => !isPast && setSelectedDate(day)}
-                            disabled={isPast}
+                            onClick={() => !isUnavailable && setSelectedDate(day)}
+                            disabled={isUnavailable}
                             className={`w-10 h-10 mx-auto flex items-center justify-center rounded-full transition-colors 
                                 ${isSameDay(day, selectedDate) ? 'bg-[#007BFF] text-white' : 'hover:bg-white/10'} 
                                 ${day.getMonth() !== currentMonth.getMonth() ? 'text-gray-600' : 'text-white/90'}
-                                ${isPast ? 'text-gray-700 !bg-transparent cursor-not-allowed' : ''}
+                                ${isUnavailable ? 'text-gray-700 !bg-transparent cursor-not-allowed' : ''}
                             `}
                         >
                             {day.getDate()}

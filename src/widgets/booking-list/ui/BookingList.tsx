@@ -12,10 +12,11 @@ interface BookingListProps {
     onCancel: (id: number) => void;
     onDelete: (id: number) => void;
     onConfirm: (id: number) => void;
+    onComplete: (id: number) => void;
     onCreateBooking?: () => void;
 }
 
-export const BookingList = ({ bookings, currentUser, isAdmin, onCancel, onDelete, onConfirm, onCreateBooking }: BookingListProps) => {
+export const BookingList = ({ bookings, currentUser, isAdmin, onCancel, onDelete, onConfirm, onComplete, onCreateBooking }: BookingListProps) => {
     const userBookings = isAdmin ? bookings : bookings.filter(b => b.userName === currentUser.name);
 
     // Use the enum for robust filtering
@@ -40,7 +41,7 @@ export const BookingList = ({ bookings, currentUser, isAdmin, onCancel, onDelete
             <section>
                 <h2 className="text-xl font-semibold text-white/90 mb-4">Предстоящие</h2>
                 {upcomingBookings.length > 0 ? (
-                    upcomingBookings.map(booking => <BookingCard key={booking.id} booking={booking} onCancel={onCancel} onDelete={onDelete} onConfirm={onConfirm} isAdmin={isAdmin}/>)
+                    upcomingBookings.map(booking => <BookingCard key={booking.id} booking={booking} onCancel={onCancel} onDelete={onDelete} onConfirm={onConfirm} onComplete={onComplete} isAdmin={isAdmin}/>)
                 ) : (
                     <p className="text-[#8E8E93]">Нет предстоящих записей.</p>
                 )}
@@ -49,7 +50,7 @@ export const BookingList = ({ bookings, currentUser, isAdmin, onCancel, onDelete
             <section className="mt-8">
                 <h2 className="text-xl font-semibold text-white/90 mb-4">Прошедшие</h2>
                 {pastBookings.length > 0 ? (
-                    pastBookings.map(booking => <BookingCard key={booking.id} booking={booking} onCancel={onCancel} onDelete={onDelete} onConfirm={onConfirm} isAdmin={isAdmin}/>)
+                    pastBookings.map(booking => <BookingCard key={booking.id} booking={booking} onCancel={onCancel} onDelete={onDelete} onConfirm={onConfirm} onComplete={onComplete} isAdmin={isAdmin}/>)
                 ) : (
                     <p className="text-[#8E8E93]">Нет прошедших записей.</p>
                 )}

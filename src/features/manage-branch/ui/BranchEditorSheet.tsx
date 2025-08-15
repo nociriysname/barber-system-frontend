@@ -19,7 +19,7 @@ interface BranchEditorSheetProps {
 }
 
 export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditorSheetProps) => {
-    const { masters, updateBranch, deleteMaster, bookings, currentUser, cancelBooking, deleteBooking, confirmBooking } = api;
+    const { masters, updateBranch, deleteMaster, bookings, currentUser, cancelBooking, deleteBooking, confirmBooking, completeBooking } = api;
     const { showPopup } = usePopup();
 
     const [activeTab, setActiveTab] = useState<'settings' | 'bookings'>('settings');
@@ -164,6 +164,7 @@ export const BranchEditorSheet = ({ isOpen, onClose, branch, api }: BranchEditor
                                 onCancel={cancelBooking}
                                 onDelete={deleteBooking}
                                 onConfirm={confirmBooking}
+                                onComplete={completeBooking}
                             />
                         )
                     )}

@@ -1,12 +1,8 @@
-
-
 import { useState } from 'react';
 import { initialBookings, initialBranches, initialNews, initialServices, initialMasters, mockUser, timeSlots } from './mock';
 import { Booking, BookingStatus, Branch, Master, MasterStatus, NewsItem, Service } from './types';
 import { telegramService } from '../lib/telegram';
-
-// Utility to simulate network delay
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import * as apiLogic from './logic';
 
 // This custom hook will act as our central API and state management
 export const useApi = () => {
@@ -19,15 +15,8 @@ export const useApi = () => {
     
     // News Management
     const addNewsItem = async (item: { title: string; text: string; imageFile: File; }) => {
-        await sleep(1500); // Simulate upload
-        const newPost: NewsItem = {
-            id: Math.max(0, ...news.map(n => n.id)) + 1,
-            title: item.title,
-            text: item.text,
-            imageUrl: URL.createObjectURL(item.imageFile),
-            date: new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-            created_at: new Date().toISOString(),
-        };
+        await apiLogic.sleep(1500); // Simulate upload
+        const newPost = apiLogic.createNewNewsItem(item, news);
         setNews(prev => [newPost, ...prev]);
     };
 
@@ -36,50 +25,21 @@ export const useApi = () => {
     };
 
     const updateNewsItem = async (id: number, data: { title?: string; text?: string; imageFile?: File; }) => {
-        await sleep(1000); // Simulate network and upload
-        setNews(prev => prev.map(item => {
-            if (item.id === id) {
-                return {
-                    ...item,
-                    title: data.title ?? item.title,
-                    text: data.text ?? item.text,
-                    imageUrl: data.imageFile ? URL.createObjectURL(data.imageFile) : item.imageUrl,
-                };
-            }
-            return item;
-        }));
+        await apiLogic.sleep(1000); // Simulate network and upload
+        setNews(prev => prev.map(item => item.id === id ? apiLogic.updateNewsItemLogic(item, data) : item));
     };
 
     // Booking Management
     const addBooking = (bookingDetails: Omit<Booking, 'id' | 'status' | 'created_at' | 'updated_at' | 'appointment_time' | 'service' | 'employee' >) => {
-        const foundService = services.find(s => s.id === bookingDetails.service_id);
-        const foundMaster = masters.find(m => m.id === bookingDetails.employee_id);
+        const result = apiLogic.createNewBooking(bookingDetails, bookings, services, masters);
 
-        if (!foundService || !foundMaster) {
+        if (!result) {
             console.error("Could not find service or master for booking.", { serviceId: bookingDetails.service_id, masterId: bookingDetails.employee_id });
             telegramService.hapticNotification('error');
             return;
         }
 
-        const newBooking: Booking = {
-            id: Math.max(0, ...bookings.map(b => b.id)) + 1,
-            ...bookingDetails,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            appointment_time: bookingDetails.date,
-            status: BookingStatus.PENDING,
-            service: {
-                id: foundService.id,
-                name: foundService.name,
-                price: foundService.price,
-                duration_minutes: foundService.duration_minutes,
-            },
-            employee: {
-                id: foundMaster.id,
-                user: foundMaster.user,
-            },
-        };
-        setBookings(prev => [newBooking, ...prev]);
+        setBookings(prev => [result, ...prev]);
         telegramService.hapticNotification('success');
         telegramService.showPopup({
             title: "Запись создана",
@@ -90,6 +50,11 @@ export const useApi = () => {
     
     const confirmBooking = (bookingId: number) => {
         setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: BookingStatus.CONFIRMED } : b));
+        telegramService.hapticNotification('success');
+    };
+
+    const completeBooking = (bookingId: number) => {
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: BookingStatus.COMPLETED } : b));
         telegramService.hapticNotification('success');
     };
 
@@ -105,40 +70,14 @@ export const useApi = () => {
     
     // Master Management
     const addMaster = async (data: { name: string, branchId: number, position: MasterStatus, username?: string, avatarFile?: File | null, working_hours_start?: string, working_hours_end?: string }) => {
-        await sleep(1000); // simulate upload
-        const newMaster: Master = {
-            id: Math.max(0, ...masters.map(m => m.id), 0) + 1,
-            name: data.name,
-            position: data.position,
-            username: data.username,
-            avatarUrl: data.avatarFile ? URL.createObjectURL(data.avatarFile) : null,
-            barbershop_id: data.branchId,
-            working_hours_start: data.working_hours_start,
-            working_hours_end: data.working_hours_end,
-        };
+        await apiLogic.sleep(1000); // simulate upload
+        const newMaster = apiLogic.createNewMaster(data, masters);
         setMasters(prev => [...prev, newMaster]);
     };
 
     const updateMaster = async (id: number, data: Partial<Pick<Master, 'name' | 'position' | 'username' | 'working_hours_start' | 'working_hours_end'>> & { avatarFile?: File | null }) => {
-        await sleep(1000);
-        setMasters(prev => prev.map(m => {
-            if (m.id === id) {
-                const { avatarFile, ...restData } = data;
-                let newAvatarUrl = m.avatarUrl;
-                if (avatarFile) {
-                    newAvatarUrl = URL.createObjectURL(avatarFile);
-                } else if (avatarFile === null) {
-                    newAvatarUrl = null;
-                }
-
-                return {
-                    ...m,
-                    ...restData,
-                    avatarUrl: newAvatarUrl,
-                };
-            }
-            return m;
-        }));
+        await apiLogic.sleep(1000);
+        setMasters(prev => prev.map(m => m.id === id ? apiLogic.updateMasterLogic(m, data) : m));
     };
     
     const deleteMaster = (masterId: number) => {
@@ -146,48 +85,31 @@ export const useApi = () => {
     };
     
     const updateMasterAvatar = async (masterId: number, imageFile: File) => {
-        await sleep(1000); // Simulate upload
+        await apiLogic.sleep(1000); // Simulate upload
         setMasters(prev => prev.map(m => m.id === masterId ? { ...m, avatarUrl: URL.createObjectURL(imageFile) } : m));
     }
 
     // Branch Management
     const addBranch = (branch: Omit<Branch, 'id' | 'created_at' | 'updated_at' | 'is_public'>) => {
-        const newBranch: Branch = {
-            ...branch,
-            id: Math.max(0, ...branches.map(b => b.id)) + 1,
-            is_public: false, // New branches are private by default
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
+        const newBranch = apiLogic.createNewBranch(branch, branches);
         setBranches(prev => [...prev, newBranch]);
     };
     
     const updateBranch = async (id: number, data: Partial<Pick<Branch, 'name' | 'is_public'>>) => {
-        await sleep(500);
+        await apiLogic.sleep(500);
         setBranches(prev => prev.map(b => b.id === id ? { ...b, ...data, updated_at: new Date().toISOString() } : b));
     };
     
     // Service Management
     const addService = async (serviceData: Omit<Service, 'id' | 'created_at' | 'updated_at' | 'duration'>) => {
-        await sleep(500);
-        const newService: Service = {
-            ...serviceData,
-            id: Math.max(0, ...services.map(s => s.id), 0) + 1,
-            duration: serviceData.duration_minutes,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
+        await apiLogic.sleep(500);
+        const newService = apiLogic.createNewService(serviceData, services);
         setServices(prev => [...prev, newService]);
     };
 
     const updateService = async (id: number, data: Partial<Pick<Service, 'name' | 'price' | 'duration_minutes'>>) => {
-        await sleep(500);
-        setServices(prev => prev.map(s => {
-            if (s.id === id) {
-                return { ...s, ...data, duration: data.duration_minutes ?? s.duration_minutes, updated_at: new Date().toISOString() };
-            }
-            return s;
-        }));
+        await apiLogic.sleep(500);
+        setServices(prev => prev.map(s => s.id === id ? apiLogic.updateServiceLogic(s, data) : s));
     };
     
     const deleteService = (id: number) => {
@@ -196,37 +118,13 @@ export const useApi = () => {
 
     // Booking View Helpers
     const getTimeSlots = (master?: Master | null) => {
-        if (master && master.working_hours_start && master.working_hours_end) {
-            const startIndex = timeSlots.indexOf(master.working_hours_start);
-            const endIndex = timeSlots.indexOf(master.working_hours_end);
-            
-            if (startIndex !== -1 && endIndex !== -1 && startIndex <= endIndex) {
-                // Return slots within working hours. The slice is inclusive of start, exclusive of end, so add 1 to endIndex.
-                return timeSlots.slice(startIndex, endIndex + 1);
-            }
-            return []; // Return empty if hours are invalid or not found
-        }
-        return timeSlots; // Return all slots if no master or hours are specified
+        return apiLogic.getAvailableTimeSlotsForMaster(master, timeSlots);
     };
 
     const getOccupiedSlots = (selectedMaster: Master | null, selectedDate: Date) => {
-        if (!selectedMaster || !selectedDate) return new Set();
-        
-        const occupied = new Set<string>();
-        for (let i = 0; i < bookings.length; i++) {
-             const booking = bookings[i];
-             const bookingDate = new Date(booking.date);
-             if(booking.masterName === selectedMaster.name && 
-                (booking.status === BookingStatus.CONFIRMED || booking.status === BookingStatus.PENDING) &&
-                bookingDate.getFullYear() === selectedDate.getFullYear() &&
-                bookingDate.getMonth() === selectedDate.getMonth() &&
-                bookingDate.getDate() === selectedDate.getDate()
-             ) {
-                 occupied.add(booking.time);
-             }
-        }
-        return occupied;
+        return apiLogic.calculateOccupiedSlots(bookings, selectedMaster, selectedDate, timeSlots);
     };
+
 
     return {
         // State
@@ -242,6 +140,7 @@ export const useApi = () => {
         updateNewsItem,
         addBooking,
         confirmBooking,
+        completeBooking,
         cancelBooking,
         deleteBooking,
         addBranch,

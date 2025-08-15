@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { View } from '../../shared/api/types';
 import { BookingList } from '../../widgets/booking-list';
@@ -10,7 +11,7 @@ interface HistoryPageProps {
 }
 
 export const HistoryPage = ({ api, setActiveView, isAdmin }: HistoryPageProps) => {
-    const { currentUser, bookings, cancelBooking, deleteBooking, confirmBooking } = api;
+    const { currentUser, bookings, cancelBooking, deleteBooking, confirmBooking, completeBooking } = api;
     const title = isAdmin ? "Все записи" : "Мои записи";
 
     return (
@@ -24,6 +25,7 @@ export const HistoryPage = ({ api, setActiveView, isAdmin }: HistoryPageProps) =
                 onCancel={cancelBooking}
                 onDelete={deleteBooking}
                 onConfirm={confirmBooking}
+                onComplete={completeBooking}
                 onCreateBooking={() => setActiveView('book')}
               />
             )}
